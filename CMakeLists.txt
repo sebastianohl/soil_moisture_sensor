@@ -30,8 +30,5 @@ execute_process(
 #add_definitions("-DGIT_BRANCH=\"${GIT_BRANCH}\"")
 #add_definitions("-DGIT_URL=\"${GIT_URL}\"")
 
-set(CMAKE_C_FLAGS -m32)
-set(CMAKE_CXX_FLAGS -m32)
-
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(soil_moisture_sensor)
