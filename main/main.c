@@ -184,7 +184,7 @@ void update_moisture(struct homie_handle_s *handle, int node, int property) {
 	if (ESP_OK == adc_read(&adc_data)) {
 
 		char value[100];
-		sprintf(value, "%d", adc_data);
+		sprintf(value, "%.2f", adc_data * (3.3f / 1024.0f));
 		ESP_LOGI(TAG, "adc value %s", value);
 
 		homie_publish_property_value(handle, node, property, value);
