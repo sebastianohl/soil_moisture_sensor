@@ -33,7 +33,7 @@ const static int MQTT_CONNECTED_BIT = BIT0;
 void update_moisture(struct homie_handle_s *handle, int node, int property);
 
 homie_handle_t homie = {
-    .deviceid = "soil_moisture_sensor",
+    .deviceid = "soil_moisture_sensor_XXXXXXXXXXXX",
     .devicename = "Soil Moisture Sensor",
     .update_interval =
         0, /* set to 0 to workaround openhab problem of taking device offline */
@@ -75,6 +75,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
         break;
     case MQTT_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+        xEventGroupClearBits(mqtt_event_group, MQTT_CONNECTED_BIT);
         break;
 
     case MQTT_EVENT_SUBSCRIBED:
@@ -107,6 +108,24 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
     return ESP_OK;
 }
 
+static void mqtt_app_start(void)
+{
+    char uri[256];
+    sprintf(uri, "mqtt://%s:%s@%s:%d", CONFIG_MQTT_USER, CONFIG_MQTT_PASSWORD,
+            CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
+    mqtt_event_group = xEventGroupCreate();
+    const esp_mqtt_client_config_t mqtt_cfg = {
+        .event_handle = mqtt_event_handler,
+        .uri = uri,
+    };
+    xEventGroupClearBits(mqtt_event_group, MQTT_CONNECTED_BIT);
+
+    ESP_LOGI(TAG, "connect to mqtt uri %s", uri);
+    ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
+    mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
+    ESP_LOGI(TAG, "Note free memory: %d bytes", esp_get_free_heap_size());
+}
+
 static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 {
     /* For accessing reason codes in case of disconnection */
@@ -124,6 +143,9 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
                  ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
         wifi_retry_count = 0;
         xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+
+        esp_mqtt_client_start(mqtt_client);
+
         break;
     case SYSTEM_EVENT_AP_STACONNECTED:
         ESP_LOGI(TAG, "station:" MACSTR " join, AID=%d",
@@ -144,6 +166,9 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
                                                        WIFI_PROTOCOL_11G |
                                                        WIFI_PROTOCOL_11N);
         }
+        esp_mqtt_client_stop(mqtt_client);
+
+        xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
         esp_wifi_connect();
         xEventGroupClearBits(wifi_event_group, WIFI_CONNECTED_BIT);
         wifi_retry_count++;
@@ -184,30 +209,14 @@ void connect_to_wifi()
     snprintf(homie.mac, sizeof(homie.mac), "%02X:%02X:%02X:%02X:%02X:%02X",
              eth_mac[0], eth_mac[1], eth_mac[2], eth_mac[3], eth_mac[4],
              eth_mac[5]);
+    // replace the last 12 bytes of device id with mac address
+    snprintf(homie.deviceid + (strlen(homie.deviceid) - 12), 12,
+             "%02X%02X%02X%02X%02X%02X", eth_mac[0], eth_mac[1], eth_mac[2],
+             eth_mac[3], eth_mac[4], eth_mac[5]);
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");
     ESP_LOGI(TAG, "connect to ap SSID:%s password:%s", CONFIG_WIFI_SSID,
              CONFIG_WIFI_PASSWORD);
-}
-
-static void mqtt_app_start(void)
-{
-    char uri[256];
-    sprintf(uri, "mqtt://%s:%s@%s:%d", CONFIG_MQTT_USER, CONFIG_MQTT_PASSWORD,
-            CONFIG_MQTT_SERVER, CONFIG_MQTT_PORT);
-    mqtt_event_group = xEventGroupCreate();
-    const esp_mqtt_client_config_t mqtt_cfg = {
-        .event_handle = mqtt_event_handler,
-        .uri = uri,
-    };
-
-    ESP_LOGI(TAG, "connect to mqtt uri %s", uri);
-    ESP_LOGI(TAG, "[APP] Free memory: %d bytes", esp_get_free_heap_size());
-    mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
-
-    xEventGroupClearBits(mqtt_event_group, MQTT_CONNECTED_BIT);
-    esp_mqtt_client_start(mqtt_client);
-    ESP_LOGI(TAG, "Note free memory: %d bytes", esp_get_free_heap_size());
 }
 
 void update_moisture(struct homie_handle_s *handle, int node, int property)
@@ -244,19 +253,20 @@ void app_main(void)
 
     connect_to_wifi();
 
-    ESP_LOGI(TAG, "wait for wifi connect");
-    xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT, false, true,
-                        portMAX_DELAY);
-
+    // init ADC
     adc_config_t adc_config;
     adc_config.mode = ADC_READ_TOUT_MODE;
     adc_config.clk_div =
         8; // ADC sample collection clock = 80MHz/clk_div = 10MHz
     ESP_ERROR_CHECK(adc_init(&adc_config));
 
+    // init pin for powering moisture sensor
     gpio_pad_select_gpio(5);
     gpio_set_direction(5, GPIO_MODE_OUTPUT);
     gpio_set_level(5, 0);
+
+    gpio_set_pull_mode(16, GPIO_PULLUP_ONLY);
+    gpio_wakeup_enable(16, GPIO_INTR_HIGH_LEVEL);
 
     mqtt_app_start();
 
@@ -268,22 +278,18 @@ void app_main(void)
     ESP_LOGI(TAG, "homie init");
     homie_init(&homie);
 
-    int foo = 0;
-    for (int i = 24 * 60 * 60 / 5; i >= 0; i--)
+    ESP_LOGI(TAG, "reset reason %d", esp_reset_reason());
+
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    homie_cycle(&homie);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    if (esp_reset_reason() != ESP_RST_DEEPSLEEP)
     {
-        ESP_LOGI(TAG, "Restarting in %d seconds...\n", i * 5);
-
-        homie.uptime += 5;
-
-        homie_cycle(&homie);
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-        if (foo++ > 2)
-        {
-            ESP_LOGI(TAG, "going to sleep for 5s");
-            esp_deep_sleep(5 * 1e6);
-        }
+        ESP_LOGI(TAG, "not waking up from deep sleep -> wait 15s");
+        vTaskDelay(15000 / portTICK_PERIOD_MS);
     }
-    ESP_LOGI(TAG, "Restarting now.\n");
+
+    ESP_LOGI(TAG, "going to sleep for 900s");
     fflush(stdout);
-    esp_restart();
+    esp_deep_sleep(900 * 1e6);
 }
