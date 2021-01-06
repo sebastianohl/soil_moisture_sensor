@@ -5,18 +5,10 @@
             "label": "C/C++: build",
             "command": "make",
             "args": [
-                "all",
+                "all"
             ],
             "options": {
                 "cwd": "/workspaces/soil_moisture_sensor",
-                "env": {
-                    "EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
-                    "IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
-                    "ESPBAUD": "921600",
-                    "ESPPORT": "/dev/ttyUSB0",
-                    "PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
-                    "python": "python3",
-                }
             },
             "problemMatcher": [
                 "$gcc"
@@ -35,14 +27,6 @@
             ],
             "options": {
                 "cwd": "/workspaces/soil_moisture_sensor",
-                "env": {
-                    "EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
-                    "IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
-                    "ESPBAUD": "921600",
-                    "ESPPORT": "/dev/ttyUSB0",
-                    "PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
-                    "python": "python3",
-                }
             },
             "problemMatcher": [
                 "$gcc"
@@ -61,14 +45,6 @@
             ],
             "options": {
                 "cwd": "/workspaces/soil_moisture_sensor",
-                "env": {
-                    "EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
-                    "IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
-                    "ESPBAUD": "921600",
-                    "ESPPORT": "/dev/ttyUSB0",
-                    "PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
-                    "python": "python3",
-                }
             },
             "problemMatcher": [
                 "$gcc"
@@ -87,14 +63,6 @@
             ],
             "options": {
                 "cwd": "/workspaces/soil_moisture_sensor",
-                "env": {
-                    "EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
-                    "IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
-                    "ESPBAUD": "921600",
-                    "ESPPORT": "/dev/ttyUSB0",
-                    "PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
-                    "python": "python3",
-                }
             },
             "problemMatcher": [
                 "$gcc"

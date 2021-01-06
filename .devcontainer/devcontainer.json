@@ -31,4 +31,12 @@
 	],
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode"
+	"remoteEnv": {
+		"EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
+		"IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
+		"ESPBAUD": "921600",
+		"ESPPORT": "/dev/ttyUSB0",
+		"PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
+		"python": "python3",
+	}
 }
