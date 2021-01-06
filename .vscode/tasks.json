@@ -8,13 +8,13 @@
                 "all",
             ],
             "options": {
-                "cwd": "${workspaceFolder}",
-                "env":{
-                    "EDF_HOME": "${workspaceFolder}/../ESP8266_RTOS_SDK/",
-                    "IDF_PATH":"${workspaceFolder}/../ESP8266_RTOS_SDK/",
+                "cwd": "/workspaces/soil_moisture_sensor",
+                "env": {
+                    "EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
+                    "IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
                     "ESPBAUD": "921600",
                     "ESPPORT": "/dev/ttyUSB0",
-                    "PATH": "${workspaceFolder}/../xtensa-lx106-elf/bin/:${env:PATH}",
+                    "PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
                     "python": "python3",
                 }
             },
@@ -34,13 +34,13 @@
                 "clean",
             ],
             "options": {
-                "cwd": "${workspaceFolder}",
-                "env":{
-                    "EDF_HOME": "${workspaceFolder}/../ESP8266_RTOS_SDK/",
-                    "IDF_PATH":"${workspaceFolder}/../ESP8266_RTOS_SDK/",
+                "cwd": "/workspaces/soil_moisture_sensor",
+                "env": {
+                    "EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
+                    "IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
                     "ESPBAUD": "921600",
                     "ESPPORT": "/dev/ttyUSB0",
-                    "PATH": "${workspaceFolder}/../xtensa-lx106-elf/bin/:${env:PATH}",
+                    "PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
                     "python": "python3",
                 }
             },
@@ -60,13 +60,13 @@
                 "flash",
             ],
             "options": {
-                "cwd": "${workspaceFolder}",
-                "env":{
-                    "EDF_HOME": "${workspaceFolder}/../ESP8266_RTOS_SDK/",
-                    "IDF_PATH":"${workspaceFolder}/../ESP8266_RTOS_SDK/",
+                "cwd": "/workspaces/soil_moisture_sensor",
+                "env": {
+                    "EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
+                    "IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
                     "ESPBAUD": "921600",
                     "ESPPORT": "/dev/ttyUSB0",
-                    "PATH": "${workspaceFolder}/../xtensa-lx106-elf/bin/:${env:PATH}",
+                    "PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
                     "python": "python3",
                 }
             },
@@ -83,16 +83,16 @@
             "label": "C/C++: cmake",
             "command": "cmake",
             "args": [
-                "CMakeLists.txt",
+                "CMakeLists.txt"
             ],
             "options": {
-                "cwd": "${workspaceFolder}",
-                "env":{
-                    "EDF_HOME": "${workspaceFolder}/../ESP8266_RTOS_SDK/",
-                    "IDF_PATH":"${workspaceFolder}/../ESP8266_RTOS_SDK/",
+                "cwd": "/workspaces/soil_moisture_sensor",
+                "env": {
+                    "EDF_HOME": "/esp/ESP8266_RTOS_SDK/",
+                    "IDF_PATH": "/esp/ESP8266_RTOS_SDK/",
                     "ESPBAUD": "921600",
                     "ESPPORT": "/dev/ttyUSB0",
-                    "PATH": "${workspaceFolder}/../xtensa-lx106-elf/bin/:${env:PATH}",
+                    "PATH": "/esp/xtensa-lx106-elf/bin/:${env:PATH}",
                     "python": "python3",
                 }
             },

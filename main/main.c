@@ -210,7 +210,7 @@ void connect_to_wifi()
              eth_mac[0], eth_mac[1], eth_mac[2], eth_mac[3], eth_mac[4],
              eth_mac[5]);
     // replace the last 12 bytes of device id with mac address
-    snprintf(homie.deviceid + (strlen(homie.deviceid) - 12), 12,
+    snprintf(homie.deviceid + (strlen(homie.deviceid) - 12), 13,
              "%02X%02X%02X%02X%02X%02X", eth_mac[0], eth_mac[1], eth_mac[2],
              eth_mac[3], eth_mac[4], eth_mac[5]);
 
