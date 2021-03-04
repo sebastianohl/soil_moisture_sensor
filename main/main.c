@@ -214,6 +214,7 @@ void connect_to_wifi()
              "%02X%02X%02X%02X%02X%02X", eth_mac[0], eth_mac[1], eth_mac[2],
              eth_mac[3], eth_mac[4], eth_mac[5]);
 
+    ESP_LOGI(TAG, "homie device id %s", homie.deviceid);
     ESP_LOGI(TAG, "wifi_init_sta finished.");
     ESP_LOGI(TAG, "connect to ap SSID:%s password:%s", CONFIG_WIFI_SSID,
              CONFIG_WIFI_PASSWORD);
@@ -221,7 +222,7 @@ void connect_to_wifi()
 
 void update_moisture(struct homie_handle_s *handle, int node, int property)
 {
-    uint16_t adc_data;
+    uint16_t adc_data = 0;
 
     gpio_set_level(5, 1);
     vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -229,8 +230,10 @@ void update_moisture(struct homie_handle_s *handle, int node, int property)
     if (ESP_OK == adc_read(&adc_data))
     {
 
-        char value[100];
-        sprintf(value, "%.2f", adc_data * (3.3f / 1024.0f));
+        char value[100] = {0};
+        float volt = ((float)adc_data) * (3.3f / 1024.0f);
+        uint8_t perc = (3.3f-volt)/0.033f;
+        sprintf(value, "%d", perc);
         ESP_LOGI(TAG, "adc value %s", value);
 
         homie_publish_property_value(handle, node, property, value);
