@@ -229,12 +229,17 @@ void update_moisture(struct homie_handle_s *handle, int node, int property)
 
     if (ESP_OK == adc_read(&adc_data))
     {
-
+        // range 1v - 2.6v = 1.6v
         char value[100] = {0};
-        float volt = ((float)adc_data) * (3.3f / 1024.0f);
-        uint8_t perc = (3.3f-volt)/0.033f;
+        float volt = ((float)adc_data) * (3.3f / 1024.0f)-1;
+        if (volt < 0)
+        {
+            ESP_LOGE(TAG, "humidity sensor not connected");
+        }
+        uint8_t perc = (1.6f-volt)/0.016f;
         sprintf(value, "%d", perc);
-        ESP_LOGI(TAG, "adc value %s", value);
+        ESP_LOGI(TAG, "adc value %d mV", (int)(volt*1000)+1000);
+        ESP_LOGI(TAG, "humidity value %s", value);
 
         homie_publish_property_value(handle, node, property, value);
     }
