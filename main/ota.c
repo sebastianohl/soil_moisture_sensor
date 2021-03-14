@@ -35,7 +35,7 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
-void execute_ota()
+esp_err_t execute_ota()
 {
     ESP_LOGI(TAG, "Starting OTA ...");
 
@@ -45,9 +45,8 @@ void execute_ota()
     };
 
     esp_err_t ret = esp_https_ota(&config);
-    if (ret == ESP_OK) {
-        esp_restart();
-    } else {
+    if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Firmware Upgrades Failed");
     }
+    return ret;
 }

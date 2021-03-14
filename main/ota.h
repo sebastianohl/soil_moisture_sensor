@@ -1,6 +1,8 @@
 #ifndef OTA_H_
 #define OTA_H_
 
-void execute_ota();
+#include "esp_err.h"
+
+esp_err_t execute_ota();
 
 #endif

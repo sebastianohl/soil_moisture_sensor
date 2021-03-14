@@ -267,8 +267,22 @@ void start_ota(struct homie_handle_s *handle, int node, int property, const char
 {
     if (data_len == 1 && data[0] == '1')
     {
+        char buf_topic[255] = {0};
+        
         OTA_ongoing = HOMIE_TRUE;
-        execute_ota();
+        esp_err_t ret = execute_ota();
+
+        // reset update topic to prevent inifinte update loop
+        sprintf(buf_topic, "homie/%s/sensor/update/set", homie.deviceid);
+        esp_mqtt_client_publish(homie.mqtt_client, buf_topic, "0",
+                            1, 1, HOMIE_TRUE);
+        if (ret == ESP_OK)
+        {
+            ESP_LOGI(TAG, "reset to start new image");
+            fflush(stdout);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            esp_restart();
+        }
         OTA_ongoing = HOMIE_FALSE;
     }
 }
