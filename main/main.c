@@ -6,6 +6,7 @@
 #include "esp_log.h"
 #include "esp_sleep.h"
 #include "esp_wifi.h"
+#include "esp_ota_ops.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 #include "freertos/task.h"
@@ -13,6 +14,8 @@
 #include "rom/ets_sys.h"
 #include "rom/gpio.h"
 #include <string.h>
+
+#include "ota.h"
 
 #include "mqtt_client.h"
 
@@ -27,10 +30,13 @@ static EventGroupHandle_t wifi_event_group;
 static EventGroupHandle_t mqtt_event_group;
 
 static esp_mqtt_client_handle_t mqtt_client = NULL;
+static int OTA_ongoing = HOMIE_FALSE;
 
 const static int MQTT_CONNECTED_BIT = BIT0;
 
 void update_moisture(struct homie_handle_s *handle, int node, int property);
+void start_ota(struct homie_handle_s *handle, int node,
+                                int property, const char *data, int data_len);
 
 homie_handle_t homie = {
     .deviceid = "soil_moisture_sensor_XXXXXXXXXXXX",
@@ -45,7 +51,7 @@ homie_handle_t homie = {
     .nodes = {{.id = "sensor",
                .name = "sensor",
                .type = "soilmoisture",
-               .num_properties = 1,
+               .num_properties = 2,
                .properties =
                    {
                        {
@@ -56,6 +62,17 @@ homie_handle_t homie = {
                            .unit = " ",
                            .datatype = HOMIE_BOOL,
                            .read_property_cbk = &update_moisture,
+                           .user_data = NULL,
+                       },
+                       {
+                           .id = "update",
+                           .name = "update",
+                           .settable = HOMIE_TRUE,
+                           .retained = HOMIE_TRUE,
+                           .unit = " ",
+                           .datatype = HOMIE_BOOL,
+                           .read_property_cbk = NULL,
+                           .write_property_cbk = &start_ota,
                            .user_data = NULL,
                        },
                    }}},
@@ -246,6 +263,16 @@ void update_moisture(struct homie_handle_s *handle, int node, int property)
     gpio_set_level(5, 0);
 }
 
+void start_ota(struct homie_handle_s *handle, int node, int property, const char *data, int data_len)
+{
+    if (data_len == 1 && data[0] == '1')
+    {
+        OTA_ongoing = HOMIE_TRUE;
+        execute_ota();
+        OTA_ongoing = HOMIE_FALSE;
+    }
+}
+
 void app_main(void)
 {
     ESP_LOGI(TAG, "starting....\n");
@@ -283,6 +310,13 @@ void app_main(void)
                         portMAX_DELAY);
 
     homie.mqtt_client = mqtt_client;
+    const esp_partition_t* current_partition = esp_ota_get_running_partition();
+    strncpy(homie.firmware, current_partition->label, sizeof(homie.firmware));
+
+    const esp_app_desc_t *app_desc = esp_ota_get_app_description();
+    strncpy(homie.firmware_version, app_desc->version, sizeof(homie.firmware_version));
+    ESP_LOGI(TAG, "running partition %s version %s", current_partition->label, app_desc->version);
+    
     ESP_LOGI(TAG, "homie init");
     homie_init(&homie);
 
@@ -295,6 +329,18 @@ void app_main(void)
     {
         ESP_LOGI(TAG, "not waking up from deep sleep -> wait 15s");
         vTaskDelay(15000 / portTICK_PERIOD_MS);
+    }
+
+    int counter = 50;
+    while (counter-- > 0 )
+    {
+        if (!OTA_ongoing) break;
+        ESP_LOGI(TAG, "OTA ongoing -> wait until finish");
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+    }
+    if (counter <= 0)
+    {
+        ESP_LOGE(TAG, "OTA takes too look -> abort and hope for the best");
     }
 
     ESP_LOGI(TAG, "going to sleep for 900s");

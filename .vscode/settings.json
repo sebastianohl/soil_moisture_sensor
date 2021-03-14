@@ -1,3 +1,7 @@
 {
-    "editor.formatOnSave": true
+    "editor.formatOnSave": true,
+    "files.associations": {
+        "esp_https_ota.h": "c",
+        "esp_ota_ops.h": "c"
+    }
 }
