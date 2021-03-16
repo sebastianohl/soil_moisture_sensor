@@ -150,8 +150,18 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
 
     switch (event->event_id)
     {
-    case SYSTEM_EVENT_STA_START:
-        esp_wifi_connect();
+    case SYSTEM_EVENT_STA_START: {
+            esp_wifi_connect();
+            esp_err_t err;
+            char hostname[33] = {0};
+            snprintf(hostname, 33, "soil-");
+            strncpy(hostname+5, homie.deviceid + (strlen(homie.deviceid) - 12), 12);
+            ESP_LOGI(TAG, "set hostname to %s", hostname);
+            if ((err = tcpip_adapter_set_hostname(WIFI_IF_STA, hostname)) != ESP_OK)
+            {
+                ESP_LOGE(TAG, "set hostname failed: %s", esp_err_to_name(err));
+            }
+        }
         break;
     case SYSTEM_EVENT_STA_GOT_IP:
         ESP_LOGI(TAG, "got ip:%s",
@@ -219,7 +229,6 @@ void connect_to_wifi()
     };
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
 
     uint8_t eth_mac[6];
     esp_wifi_get_mac(WIFI_IF_STA, eth_mac);
@@ -235,6 +244,8 @@ void connect_to_wifi()
     ESP_LOGI(TAG, "wifi_init_sta finished.");
     ESP_LOGI(TAG, "connect to ap SSID:%s password:%s", CONFIG_WIFI_SSID,
              CONFIG_WIFI_PASSWORD);
+
+    ESP_ERROR_CHECK(esp_wifi_start());
 }
 
 void update_moisture(struct homie_handle_s *handle, int node, int property)
@@ -265,17 +276,22 @@ void update_moisture(struct homie_handle_s *handle, int node, int property)
 
 void start_ota(struct homie_handle_s *handle, int node, int property, const char *data, int data_len)
 {
-    if (data_len == 1 && data[0] == '1')
+    if (data_len > 0)
     {
         char buf_topic[255] = {0};
+        char url[255] = {0};
+
+        snprintf(url, sizeof(url), "%.*s", data_len, data);
         
         OTA_ongoing = HOMIE_TRUE;
-        esp_err_t ret = execute_ota();
+        ESP_LOGI(TAG, "get OTA update from %s", url);
+
+        esp_err_t ret = execute_ota(url);
 
         // reset update topic to prevent inifinte update loop
         sprintf(buf_topic, "homie/%s/sensor/update/set", homie.deviceid);
-        esp_mqtt_client_publish(homie.mqtt_client, buf_topic, "0",
-                            1, 1, HOMIE_TRUE);
+        esp_mqtt_client_publish(homie.mqtt_client, buf_topic, "",
+                            0, 1, HOMIE_TRUE);
         if (ret == ESP_OK)
         {
             ESP_LOGI(TAG, "reset to start new image");
@@ -342,7 +358,7 @@ void app_main(void)
     if (esp_reset_reason() != ESP_RST_DEEPSLEEP)
     {
         ESP_LOGI(TAG, "not waking up from deep sleep -> wait 15s");
-        vTaskDelay(15000 / portTICK_PERIOD_MS);
+        vTaskDelay(150000 / portTICK_PERIOD_MS);
     }
 
     int counter = 50;

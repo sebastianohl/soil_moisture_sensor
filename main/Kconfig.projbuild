@@ -16,7 +16,5 @@ config MQTT_USER
     string "MQTT User"
 config MQTT_PASSWORD
     string "MQTT Passowrd"
-config FIRMWARE_UPGRADE_URL
-    string "Firmware Upgrade URL"
 
 endmenu

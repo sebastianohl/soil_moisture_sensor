@@ -35,12 +35,12 @@ esp_err_t _http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
-esp_err_t execute_ota()
+esp_err_t execute_ota(const char *url)
 {
     ESP_LOGI(TAG, "Starting OTA ...");
 
     esp_http_client_config_t config = {
-        .url = CONFIG_FIRMWARE_UPGRADE_URL,
+        .url = url,
         .event_handler = _http_event_handler,
     };
 
