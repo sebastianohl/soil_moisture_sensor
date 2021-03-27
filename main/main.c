@@ -172,8 +172,11 @@ static esp_err_t wifi_event_handler(void *ctx, system_event_t *event)
         wifi_retry_count = 0;
         xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
 
+        char hostname[100] = {0};
+        snprintf(hostname, sizeof(hostname), "%s-%.*s",CONFIG_REMOTELOG_SYSLOG_APP, 12, homie.deviceid + (strlen(homie.deviceid) - 12));
+
         start_remote_log(CONFIG_REMOTELOG_UDP_HOST, CONFIG_REMOTELOG_UDP_PORT,
-            CONFIG_REMOTELOG_SYSLOG_HOST, CONFIG_REMOTELOG_SYSLOG_PORT, CONFIG_REMOTELOG_SYSLOG_APP);
+            CONFIG_REMOTELOG_SYSLOG_HOST, CONFIG_REMOTELOG_SYSLOG_PORT, hostname);
         esp_mqtt_client_start(mqtt_client);
 
         break;
