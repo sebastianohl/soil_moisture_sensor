@@ -365,7 +365,7 @@ void app_main(void)
     if (esp_reset_reason() != ESP_RST_DEEPSLEEP)
     {
         ESP_LOGI(TAG, "not waking up from deep sleep -> wait 15s");
-        vTaskDelay(150000 / portTICK_PERIOD_MS);
+        vTaskDelay(15000 / portTICK_PERIOD_MS);
     }
 
     int counter = 50;
@@ -382,5 +382,6 @@ void app_main(void)
 
     ESP_LOGI(TAG, "going to sleep for 900s");
     fflush(stdout);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
     esp_deep_sleep(900 * 1e6);
 }
